@@ -6,7 +6,7 @@ Sections: Executive Summary · Key Risks · Emerging Trends · Tomorrow Watchlis
 import streamlit as st
 
 from services.summarizer import get_gemini_client
-from utils.helpers import flatten_html
+from utils.helpers import flatten_html, flag_for_region
 
 
 def _rule_based_briefing(df):
@@ -16,7 +16,7 @@ def _rule_based_briefing(df):
     top_cat_short = top_cat.split("/")[0].strip()
     pos_ratio = df["sentiment"].str.contains("긍정", na=False).mean() if "sentiment" in df else 0
     neg_ratio = df["sentiment"].str.contains("부정", na=False).mean() if "sentiment" in df else 0
-    hot = df[df.get("is_hot", False) == True].head(3) if "is_hot" in df else df.head(3)
+    hot = df[df["is_hot"] == True].head(3) if "is_hot" in df.columns else df.head(3)
     hot_titles = [str(t) for t in hot["title"].tolist()]
 
     mood = "긍정적인 신호가 우세" if pos_ratio > neg_ratio else ("부정적 이슈가 다소 두드러짐" if neg_ratio > pos_ratio else "혼재된 신호")
@@ -158,4 +158,37 @@ def render_executive_insight(df, ai_on: bool):
         {action_html}
     </div>
     """
+    st.markdown(flatten_html(html), unsafe_allow_html=True)
+
+
+def render_exec_hot_stories(df):
+    """Executive Brief 하단 — HOT 기사 4개를 컴팩트 링크로 표시."""
+    if df is None or df.empty or "is_hot" not in df.columns:
+        return
+    hot = df[df["is_hot"] == True].head(4)
+    if hot.empty:
+        return
+
+    items_html = ""
+    for _, r in hot.iterrows():
+        flag = flag_for_region(r.get("region", ""))
+        raw_title = str(r.get("title", ""))
+        title = raw_title[:78] + ("…" if len(raw_title) > 78 else "")
+        url = r.get("url", "#")
+        src = r.get("source", "")
+        cat = str(r.get("category", "")).split("/")[0].strip()
+        items_html += (
+            f'<a class="exec-hot-link" href="{url}" target="_blank" rel="noopener">'
+            f'<span class="exec-hot-flag">{flag}</span>'
+            f'<span class="exec-hot-title">{title}</span>'
+            f'<span class="exec-hot-src">{src} · {cat}</span>'
+            f'</a>'
+        )
+
+    html = (
+        f'<div class="exec-hot-box">'
+        f'<div class="exec-hot-label">📎 오늘의 주요 기사 / Today\'s Top Stories</div>'
+        f'{items_html}'
+        f'</div>'
+    )
     st.markdown(flatten_html(html), unsafe_allow_html=True)

@@ -194,7 +194,7 @@ def _ai_structured(title: str, description: str, category: str) -> dict | None:
                 resp = client.models.generate_content(
                     model="gemini-2.5-flash", contents=prompt,
                     config=types.GenerateContentConfig(
-                        max_output_tokens=1024,
+                        max_output_tokens=2048,
                         temperature=0.3,
                         thinking_config=types.ThinkingConfig(thinking_budget=0),
                     ),

@@ -15,8 +15,10 @@ NEGATIVE_KW = [
 HOT_KW = [
     "최저임금","정년연장","근로기준법","육아휴직","주4일제","AI 채용","노란봉투법",
     "포괄임금","직장내괴롭힘","플랫폼노동","ESG","MZ노조","통상임금",
+    "중대재해처벌법","산업안전보건법","직무급","임금피크제","성과관리",
+    "AI 인력전환","인구절벽","외국인 인재","직무급 전환","성과급 체계",
     "minimum wage","4-day work week","AI hiring","pay transparency",
-    "labor reform","gig worker","DEI","quiet quitting"
+    "labor reform","gig worker","DEI","skills-based pay","workforce transformation"
 ]
 
 def analyze(row):
