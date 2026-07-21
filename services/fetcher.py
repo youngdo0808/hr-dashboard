@@ -144,23 +144,37 @@ HR_RELEVANCE_KW = [
     "gig workers", "quiet quitting", "burnout", "workplace harassment", "dei",
     "diversity equity inclusion", "leadership development", "hr strategy",
     "chro", "human capital", "job market", "unemployment rate",
+    "severance", "wrongful termination", "employment tribunal",
+    "psychological safety", "workforce planning", "headcount",
+    "org design", "span of control", "eap", "employee assistance program",
+    "total rewards", "pay equity audit",
 ]
 EXCLUDE_KW = [
-    # 스포츠 (구체적 맥락 키워드로 정밀화)
+    # 스포츠
     "축구", "야구", "농구", "배구", "골프", "올림픽", "월드컵", "국가대표",
     "스포츠 선수", "프로선수", "리그 경기", "챔피언스리그", "구단", "경기 결과", "홈런", "득점",
     "선수 이적", "스포츠 드래프트", "16강", "8강", "4강", "결승전", "금메달", "은메달", "동메달",
-    "손흥민", "박지성", "이강인", "황희찬", "김민재", "황선홍", "홍명보",
+    "손흥민", "박지성", "이강인", "황희찬", "김민재",
     # 정치
     "대통령", "국회", "여야", "정당", "대선", "총선", "검찰", "기소", "탄핵",
     "의원", "도지사", "국정감사", "여의도 정치", "지방선거", "공천",
-    # 부동산·금융 (HR 무관) — "주가" 단독 제외: 스톡옵션 기사 차단 방지
+    # 부동산·금융 (HR 무관)
     "부동산", "주가 급락", "주가 폭락", "주가 조작", "주식시장", "환율", "금리 인상", "코인", "가상화폐", "비트코인",
     # 연예·오락
     "드라마", "연예인", "아이돌", "콘서트", "영화 개봉",
     # 기타
     "오늘의 운세", "운세", "사주", "별자리", "타로", "궁합",
-    "football", "soccer", "world cup", "olympics", "box office", "k-pop",
+    # English sports
+    "football", "soccer", "world cup", "olympics", "NBA", "NFL", "MLB", "NHL",
+    "Premier League", "Champions League", "transfer window", "match result",
+    "box score", "touchdown", "hat trick", "grand slam",
+    # English politics
+    "senate vote", "election campaign", "campaign rally", "polling data", "ballot initiative",
+    # English entertainment
+    "box office", "k-pop", "Grammy", "Emmy", "Oscar", "celebrity gossip",
+    "Netflix series", "movie premiere",
+    # English personal finance (distinct from HR compensation)
+    "stock tips", "crypto trading", "bitcoin price", "mortgage rates", "personal loan",
 ]
 
 
@@ -179,13 +193,10 @@ def is_hr_relevant(title, description):
 
 # RSS 소스명 → Think Tank 태그 자동 매핑 (이 소스에서 온 기사는 Think Tank에 표시)
 THINKTANK_TAG_MAP = {
-    "McKinsey":      "McKinsey Report",
-    "HBR":           "HBR Research",
-    "WEF":           "WEF Research",
-    "ILO":           "ILO Report",
-    "OECD":          "OECD Research",
-    "Bloomberg Econ": "Bloomberg Analysis",
-    "Bloomberg Biz":  "Bloomberg Analysis",
+    "HBR":  "HBR Research",
+    "WEF":  "WEF Research",
+    "ILO":  "ILO Report",
+    "OECD": "OECD Research",
 }
 
 RSS_SOURCES = {
@@ -194,7 +205,7 @@ RSS_SOURCES = {
     "매일노동뉴스":       ("https://www.labortoday.co.kr/rss/allArticle.xml", "국내"),
     "Korea Herald":       ("http://www.koreaherald.com/rss/social.xml", "국내(영)"),
     "ILO":                ("https://www.ilo.org/global/about-the-ilo/newsroom/rss/lang--en/index.htm", "글로벌"),
-    "OECD":               ("https://www.oecd.org/feed/topicen/employment/news.xml", "글로벌"),
+    "OECD":               ("https://www.oecd.org/employment/labour-stats/rss2/", "글로벌"),
     "WEF":                ("https://www.weforum.org/rss-feeds/work/", "글로벌"),
     # 참고: SHRM은 신규 웹사이트 전환 후 공식적으로 RSS 미지원 상태입니다
     # (SHRM 자체 고지: "the new SHRM website does not support RSS feeds").
@@ -208,11 +219,11 @@ RSS_SOURCES = {
     "HR Grapevine":       ("https://www.hrgrapevine.com/rss", "글로벌(EU)"),
     "HR Exchange Labor":  ("https://www.hrexchangenetwork.com/rss/employment-law", "글로벌"),
     "HR Exchange Talent": ("https://www.hrexchangenetwork.com/rss/talent-management", "글로벌"),
-    "HR Daily":           ("https://www.hrdaily.com.au/rss", "APAC"),
+    # HR Daily Australia removed public RSS in 2023 — removed to avoid hang time.
+    # "HR Daily":         ("https://www.hrdaily.com.au/rss", "APAC"),
     "HR Katha":           ("https://www.hrkatha.com/feed/", "APAC"),
-    "Bloomberg Econ":     ("https://feeds.bloomberg.com/economics/news.rss", "글로벌"),
-    "Bloomberg Biz":      ("https://feeds.bloomberg.com/industries/news.rss", "글로벌"),
-    "McKinsey":           ("https://www.mckinsey.com/insights/rss", "글로벌"),
+    # Bloomberg and McKinsey block RSS scrapers — removed to avoid startup lag.
+    # Their curated content is covered by CURATED_INSIGHTS.
     "Reuters Biz":        ("https://feeds.reuters.com/reuters/businessNews", "글로벌"),
     "CNBC Work":          ("https://search.cnbc.com/rs/search/combinedcombined.xml?partnerId=wrss01&id=10000108", "글로벌"),
     "BBC Work":           ("https://feeds.bbci.co.uk/news/business/rss.xml", "글로벌"),
@@ -385,6 +396,7 @@ def fetch_naver(keyword, display=15):
             result.append({
                 "title": clean_html(item.get("title", "")),
                 "title_ko": clean_html(item.get("title", "")),
+                "title_en": "",  # Korean-only; empty prevents Korean title leaking into English mode
                 "description": clean_html(item.get("description", "")),
                 "summary_ko": clean_html(item.get("description", "")),
                 "summary_en": "",
@@ -411,7 +423,9 @@ def fetch_rss(source_name, rss_url, region, max_items=12):
             break
 
     try:
-        feed = feedparser.parse(rss_url)
+        r = requests.get(rss_url, timeout=6,
+                         headers={"User-Agent": "Mozilla/5.0 (compatible; RSS-reader/1.0)"})
+        feed = feedparser.parse(r.content)
         items = []
         for entry in feed.entries[:max_items]:
             pub = ""
@@ -483,6 +497,232 @@ def fetch_newsdata(keyword, language="en", max_items=10):
         return result
     except Exception:
         return []
+
+
+# ── Business Insights RSS (credible think tanks + quality media only) ──────
+# Business Insights live RSS — restricted to guaranteed top-tier sources only.
+# McKinsey and Bloomberg were removed (block scrapers/paywall — silently returned nothing).
+# Google News aggregators and ZDNet Korea were removed (variable publisher quality
+# incompatible with executive-grade positioning of this tab).
+# The 9 BUSINESS_INSIGHTS_CURATED entries always anchor the tab regardless of live RSS.
+BUSINESS_RSS_SOURCES = {
+    "HBR":             ("https://feeds.hbr.org/harvardbusiness", "글로벌"),
+    "MIT Tech Review": ("https://www.technologyreview.com/feed/", "글로벌"),
+    "Wharton":         ("https://knowledge.wharton.upenn.edu/feed/", "글로벌"),
+    "BCG":             ("https://www.bcg.com/rss/publications.xml", "글로벌"),
+}
+
+BUSINESS_INSIGHTS_CURATED = [
+    {
+        "title": "NVIDIA's Physical AI Vision: A New Paradigm for Industrial Automation",
+        "title_ko": "NVIDIA의 Physical AI 비전: 산업 자동화의 새로운 패러다임",
+        "summary_en": "NVIDIA CEO Jensen Huang defined 'Physical AI' as AI systems that understand and interact with the physical world — autonomous robots, smart factories, and self-driving vehicles. McKinsey estimates this could unlock $4–6 trillion in annual economic value by 2030, fundamentally reshaping manufacturing, logistics, and operations workforces.",
+        "summary_ko": "NVIDIA CEO 젠슨 황이 제안한 'Physical AI'는 물리 세계를 이해하고 상호작용하는 AI 시스템입니다. 자율 로봇, 스마트 팩토리, 자율주행차가 포함됩니다. McKinsey는 2030년까지 연간 4~6조 달러의 경제적 가치를 창출하며 제조·물류·운영 인력 구조를 근본적으로 재편할 것으로 전망합니다.",
+        "insight_en": "HR leaders must plan for workplaces where humans and AI-powered robots collaborate. Technical reskilling, new safety protocols, and redefined job architectures will be critical deliverables over the next three years.",
+        "insight_ko": "HR 리더들은 인간과 AI 로봇이 협업하는 미래 직장을 선제적으로 계획해야 합니다. 기술적 리스킬링, 새로운 안전 프로토콜, 재정의된 직무 구조가 향후 3년간 HR의 핵심 과제입니다.",
+        "action_en": "Map physical operations to identify roles at highest automation risk. Design a reskilling roadmap for workers transitioning from execution to oversight of Physical AI systems.",
+        "action_ko": "물리적 운영을 파악하여 자동화 위험도가 높은 역할을 식별하세요. Physical AI 시스템 감독 역할로 전환할 근로자를 위한 리스킬링 로드맵을 설계하세요.",
+        "source": "McKinsey Global Institute / NVIDIA", "topic": "physical_ai",
+        "url": "https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights",
+        "tag": "Business Insight", "region": "글로벌", "published_str": "McKinsey · NVIDIA Research",
+        "category": "벤치마킹·글로벌트렌드 / Benchmarking",
+    },
+    {
+        "title": "The Global Semiconductor Talent Shortage: 1M+ Engineers Needed by 2030",
+        "title_ko": "글로벌 반도체 인재 부족: 2030년까지 100만 명 이상 필요",
+        "summary_en": "SEMI's workforce research projects a global shortfall of more than 1 million skilled semiconductor workers by 2030. TSMC, Samsung, SK Hynix, and Intel are competing for a critically thin pool of electrical engineers and process specialists, driving compensation 40–60% above market in key hubs including Korea, Taiwan, and the US.",
+        "summary_ko": "SEMI의 인력 연구에 따르면 2030년까지 전 세계적으로 숙련된 반도체 인력 100만 명 이상이 부족할 것으로 전망합니다. TSMC, 삼성, SK하이닉스, 인텔 등이 치열하게 경쟁하며 한국·대만·미국에서 시장 대비 40~60% 높은 보상 수준을 형성하고 있습니다.",
+        "insight_en": "Semiconductor HR must build aggressive university partnerships and fast-track programs. Retention programs must account for competitor poaching at significant premium multiples.",
+        "insight_ko": "반도체 HR은 대학과의 적극적인 파트너십 및 패스트트랙 프로그램을 구축해야 합니다. 경쟁사의 고액 스카우트를 감안한 리텐션 프로그램이 시급합니다.",
+        "action_en": "Partner with engineering universities for joint research programs now. Implement multi-year retention incentives (RSUs, research grants) for core semiconductor talent.",
+        "action_ko": "지금 당장 공대와 공동 연구 프로그램을 구축하세요. 핵심 반도체 인재를 위한 다년도 리텐션 인센티브(RSU, 연구비 지원)를 도입하세요.",
+        "source": "SEMI / HBR / Bloomberg", "topic": "semiconductor",
+        "url": "https://www.semi.org/en/workforce-development",
+        "tag": "Business Insight", "region": "글로벌", "published_str": "SEMI · HBR 리서치",
+        "category": "채용·인재확보 / Recruiting",
+    },
+    {
+        "title": "McKinsey State of AI 2025: 79% Adoption, Only 20% Capturing Real Value",
+        "title_ko": "McKinsey AI 현황 2025: 도입 79%, 실질 가치 창출은 20%",
+        "summary_en": "McKinsey's State of AI 2025 report reveals that while AI adoption has reached 79% globally, only 20% of companies are capturing meaningful business value. The gap is driven by poor change management, lack of AI-ready workforce, and insufficient data infrastructure. Companies with dedicated AI talent development programs are 3× more likely to be in the value-capturing group.",
+        "summary_ko": "McKinsey의 AI 현황 2025 보고서에 따르면 AI 도입률이 79%에 달하지만 실질적인 비즈니스 가치를 창출하는 기업은 20%에 불과합니다. 격차는 취약한 변화 관리, AI 준비된 인력 부족, 불충분한 데이터 인프라에서 비롯됩니다.",
+        "insight_en": "The AI value gap is a people and change management problem, not a technology problem. HR's role in building AI literacy and managing cultural shift is the critical differentiator.",
+        "insight_ko": "AI 가치 격차는 기술이 아닌 인재와 변화 관리 문제입니다. AI 리터러시 구축과 문화적 전환 관리에서 HR의 역할이 핵심 차별화 요소입니다.",
+        "action_en": "Assess your AI maturity using McKinsey's AI readiness framework. Prioritize mandatory AI fluency training for all management levels within the next two quarters.",
+        "action_ko": "McKinsey의 AI 준비도 프레임워크로 조직의 AI 성숙도를 평가하세요. 향후 2분기 내 전 관리 계층 대상 필수 AI 역량 교육을 우선순위로 삼으세요.",
+        "source": "McKinsey Global Institute", "topic": "ai_strategy",
+        "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
+        "tag": "Business Insight", "region": "글로벌", "published_str": "McKinsey 리서치 2025",
+        "category": "벤치마킹·글로벌트렌드 / Benchmarking",
+    },
+    {
+        "title": "EU AI Act: HR High-Risk AI Compliance Requirements (2024–2026 Rollout)",
+        "title_ko": "EU AI 법: HR 고위험 AI 컴플라이언스 요건 (2024~2026 단계 시행)",
+        "summary_en": "The EU AI Act entered into force in August 2024, with most substantive provisions applying from August 2026 in a phased rollout. High-risk AI applications in HR — recruitment screening, performance evaluation, employee monitoring — face strict transparency mandates, mandatory human oversight, and regular bias audits. Non-compliance carries fines up to €35M or 7% of global annual turnover.",
+        "summary_ko": "EU AI 법이 2024년 8월 발효되었으며, 대부분의 실질적 조항은 2026년 8월부터 단계적으로 적용됩니다. 채용 심사, 성과 평가, 직원 모니터링 등 HR 분야의 고위험 AI는 투명성 의무, 필수 인간 감독, 정기적 편향 감사 요건을 충족해야 합니다. 미준수 시 최대 3,500만 유로 또는 전 세계 연 매출의 7%에 달하는 벌금이 부과됩니다.",
+        "insight_en": "Global companies using AI in HR must now conduct AI impact assessments and maintain documentation of AI-driven decisions. The EU AI Act sets a global standard likely to influence Korean legislation soon.",
+        "insight_ko": "HR 프로세스에 AI를 사용하는 글로벌 기업은 AI 영향 평가를 실시하고 AI 기반 결정의 문서를 유지해야 합니다. EU AI 법은 한국 AI 법률에도 영향을 미칠 새로운 글로벌 선례입니다.",
+        "action_en": "Audit all AI tools used in HR processes against EU AI Act high-risk classifications. Assign a dedicated AI Compliance Lead in HR and create a live register of AI systems used across the employee lifecycle.",
+        "action_ko": "현재 HR 프로세스에 사용 중인 모든 AI 도구를 EU AI 법의 고위험 분류 기준으로 감사하세요. HR 전담 AI 컴플라이언스 책임자를 지정하고 분기별 업데이트 등록부를 만드세요.",
+        "source": "HBR / Deloitte Legal", "topic": "ai_strategy",
+        "url": "https://hbr.org/2024/07/what-the-eus-ai-act-means-for-your-company",
+        "tag": "Business Insight", "region": "글로벌", "published_str": "HBR · Deloitte 리서치",
+        "category": "노동법·노무 / Labor Law",
+    },
+    {
+        "title": "Physical AI in Korean Manufacturing: Hyundai, Samsung, and the Next Automation Wave",
+        "title_ko": "한국 제조업의 Physical AI: 현대차·삼성의 차세대 자동화",
+        "summary_en": "Hyundai Motor Group (Boston Dynamics), Samsung Electronics, and LG are accelerating Physical AI investment — humanoid robots, AI-powered quality control, and smart factory systems at scale. Korea ranks 2nd globally in robot density, and this next wave targets cognitive as well as physical tasks.",
+        "summary_ko": "현대자동차그룹(보스턴 다이나믹스), 삼성전자, LG 등이 휴머노이드 로봇, AI 기반 품질 관리, 스마트 팩토리 시스템을 대규모로 배치하며 Physical AI 투자를 가속화하고 있습니다. 한국은 로봇 밀도 세계 2위로, 이번 자동화 물결은 육체적·인지적 과제 모두를 대상으로 합니다.",
+        "insight_en": "Korean manufacturing HR must proactively redesign job functions. The key challenge is reskilling workers toward AI system oversight, data interpretation, and specialized maintenance roles.",
+        "insight_ko": "한국 제조 HR은 Physical AI 전환에 따른 직무 재설계를 선제적으로 준비해야 합니다. AI 시스템 감독, 데이터 해석, Physical AI가 창출하는 전문 유지보수 역할로의 인력 전환이 핵심 과제입니다.",
+        "action_en": "Calculate the percentage of production workers affected by Physical AI over 3 years. Design a 'Tech Transition Academy' and partner with the labor-management council to share plans transparently.",
+        "action_ko": "향후 3년간 Physical AI 도입으로 영향받을 생산직 비율을 산출하세요. '기술 전환 아카데미'를 설계하고 노사협의회와 전환 계획을 투명하게 공유하세요.",
+        "source": "Korea JoongAng Daily / McKinsey", "topic": "physical_ai",
+        "url": "https://www.mckinsey.com/featured-insights/future-of-work",
+        "tag": "Business Insight", "region": "국내", "published_str": "McKinsey · 중앙일보 리서치",
+        "category": "벤치마킹·글로벌트렌드 / Benchmarking",
+    },
+    {
+        "title": "HBR: Why Most Digital Transformations Fail — Key Differentiators of Success",
+        "title_ko": "HBR: 디지털 전환 실패의 이유와 성공의 핵심 차별화 요소",
+        "summary_en": "Research widely cited in Harvard Business Review and McKinsey estimates that only 16–20% of digital transformation initiatives fully achieve their objectives. Differentiators include genuine executive commitment, dedicated digital talent acquisition, agile organizational redesign, and systematic change management. Companies investing equally in people, culture, and technology are estimated to be significantly more likely to succeed.",
+        "summary_ko": "Harvard Business Review 및 McKinsey에서 널리 인용되는 연구에 따르면 디지털 전환 이니셔티브의 목표를 완전히 달성하는 기업은 16~20%에 불과한 것으로 추정됩니다. 차별화 요인은 경영진의 헌신, 전담 디지털 인재 확보, 애자일 조직 재설계, 체계적인 변화 관리입니다.",
+        "insight_en": "Digital transformation is fundamentally a human transformation. HR's mandate is to build digital fluency, design adaptive structures, and create psychological safety for experimentation.",
+        "insight_ko": "디지털 전환은 근본적으로 인적 전환입니다. HR의 역할은 전 계층에 걸친 디지털 역량 구축, 적응형 구조 설계, 실험을 위한 심리적 안전성 창출입니다.",
+        "action_en": "Create a 'Digital Transformation Human Capital Index' — tracking digital fluency, change readiness, and innovation participation as leading indicators of transformation success, reported quarterly.",
+        "action_ko": "디지털 역량, 변화 준비도, 혁신 참여율을 분기별로 경영진에게 보고하는 '디지털 전환 인적자본 지수'를 만들어 전환 성공의 선행 지표로 활용하세요.",
+        "source": "Harvard Business Review", "topic": "digital_transformation",
+        "url": "https://hbr.org/topic/subject/digital-transformation",
+        "tag": "Business Insight", "region": "글로벌", "published_str": "HBR 리서치",
+        "category": "벤치마킹·글로벌트렌드 / Benchmarking",
+    },
+    {
+        "title": "Korea K-Chips Act & US CHIPS Act: Workforce Mandates Inside the Subsidy Race",
+        "title_ko": "K-반도체법과 미국 CHIPS법: 보조금 경쟁 속 인력 개발 의무",
+        "summary_en": "South Korea's K-Chips Act (₩26 trillion in tax credits through 2030) and the US CHIPS and Science Act ($52 billion) embed significant workforce development mandates — Korea targeting 30,000 new semiconductor engineers by 2027, the US committing $13.2 billion to workforce development tied to CHIPS grant eligibility.",
+        "summary_ko": "한국의 K-반도체법(2030년까지 26조 원 세액공제)과 미국의 CHIPS 및 과학법(520억 달러)은 상당한 인력 개발 의무를 내포합니다. 한국은 2027년까지 반도체 엔지니어 3만 명 목표를, 미국은 CHIPS 지원금 자격과 직결된 인력 개발에 132억 달러를 투자합니다.",
+        "insight_en": "Companies receiving K-Chips Act benefits must realign HR strategy to satisfy workforce development conditions — an opportunity to elevate HR from compliance to national strategic partner.",
+        "insight_ko": "K-반도체법 혜택을 받는 기업들은 정부의 인력 개발 조건 충족을 위해 HR 전략을 재정립해야 합니다. 이는 HR을 단순 컴플라이언스에서 국가 전략적 파트너로 격상하는 기회입니다.",
+        "action_en": "Integrate workforce development KPIs required for K-Chips Act eligibility into the HR annual plan. Put university-linked semiconductor curriculum development on the CEO-level agenda.",
+        "action_ko": "K-반도체법 세액공제 자격 조건에 필요한 인력 개발 KPI를 HR 연간 계획에 통합하세요. 대학 연계 반도체 특화 교육 과정 개발을 CEO급 의제로 상정하세요.",
+        "source": "Korea JoongAng Daily / Brookings Institution", "topic": "semiconductor",
+        "url": "https://www.brookings.edu/topic/technology-innovation/",
+        "tag": "Business Insight", "region": "국내", "published_str": "JoongAng · Brookings 리서치",
+        "category": "벤치마킹·글로벌트렌드 / Benchmarking",
+    },
+    {
+        "title": "Bloomberg Intelligence: The $1 Trillion AI Infrastructure Buildout and Its Workforce Impact",
+        "title_ko": "Bloomberg: 1조 달러 AI 인프라 구축이 인력 구조에 미치는 영향",
+        "summary_en": "Bloomberg Intelligence estimates global investment in AI infrastructure — data centers, chips, power systems, networking — will reach $1 trillion by 2027. This creates unprecedented demand for data center engineers, electrical engineers, cooling specialists, and AI operations staff across the US, Europe, and Asia.",
+        "summary_ko": "Bloomberg Intelligence에 따르면 데이터 센터, 반도체, 전력 시스템, 네트워킹을 포함한 AI 인프라에 대한 전 세계 투자가 2027년까지 1조 달러에 달할 것으로 전망합니다. 이는 데이터 센터 엔지니어, 전기 엔지니어, 냉각 시스템 전문가, AI 운영 인력에 대한 전례 없는 수요를 창출합니다.",
+        "insight_en": "The AI infrastructure boom requires massive hiring in traditional engineering and trades — not just software. HR leaders must rethink talent sourcing beyond software development.",
+        "insight_ko": "AI 인프라 붐은 소프트웨어뿐 아니라 전통적인 엔지니어링과 기술직 분야에서의 대규모 채용을 요구합니다. HR 리더들은 소프트웨어 개발을 훨씬 넘어 인재 소싱을 재고해야 합니다.",
+        "action_en": "Map your AI infrastructure hiring needs for 2025–2027 including non-software technical roles. Develop talent pipelines through vocational and engineering programs ahead of the market.",
+        "action_ko": "비소프트웨어 기술직을 포함하여 2025~2027년 AI 인프라 채용 수요를 파악하세요. 시장보다 앞서 직업 및 공학 프로그램과 파트너십을 통한 인재 파이프라인을 개발하세요.",
+        "source": "Bloomberg Intelligence", "topic": "ai_strategy",
+        "url": "https://www.bloomberg.com/professional/solutions/bloomberg-intelligence/",
+        "tag": "Business Insight", "region": "글로벌", "published_str": "Bloomberg Intelligence",
+        "category": "채용·인재확보 / Recruiting",
+    },
+    {
+        "title": "BCG 2025: Agentic AI Moving to Production — Governance Frameworks Urgently Needed",
+        "title_ko": "BCG 2025: 에이전틱 AI가 실제 운영으로 — 거버넌스 프레임워크 시급",
+        "summary_en": "BCG's 2025 AI at Work report finds that agentic AI — autonomous systems that plan, reason, and execute multi-step tasks — is transitioning from pilot to production at leading enterprises. Early adopters in finance, legal, and HR report 30–50% productivity gains in knowledge work, but governance frameworks remain critically underdeveloped in most organizations.",
+        "summary_ko": "BCG의 2025 AI 직장 보고서에 따르면 다단계 작업을 계획·추론·실행하는 자율 AI 시스템인 에이전틱 AI가 선도 기업에서 파일럿에서 실제 운영으로 이동하고 있습니다. 금융, 법률, HR 분야의 초기 도입자들은 30~50%의 생산성 향상을 보고하지만 거버넌스 프레임워크는 대부분의 조직에서 아직 미흡합니다.",
+        "insight_en": "As agentic AI takes over routine knowledge work, HR must redesign knowledge worker roles around complex judgment, ethical reasoning, and strategic creativity — capabilities AI cannot replicate.",
+        "insight_ko": "에이전틱 AI가 일상적인 지식 업무를 맡게 되면서 HR은 복잡한 판단력, 윤리적 추론, 전략적 창의성을 중심으로 지식 근로자 역할을 재설계해야 합니다.",
+        "action_en": "Develop an 'Agentic AI Governance Charter' defining which decisions require human approval, how AI actions are audited, and the escalation path when AI agents make errors.",
+        "action_ko": "어떤 결정에 인간 승인이 필요한지, AI 행동이 어떻게 감사되는지, AI 에이전트가 오류를 범할 때의 에스컬레이션 경로를 정의하는 '에이전틱 AI 거버넌스 헌장'을 개발하세요.",
+        "source": "BCG", "topic": "ai_strategy",
+        "url": "https://www.bcg.com/capabilities/artificial-intelligence",
+        "tag": "Business Insight", "region": "글로벌", "published_str": "BCG 리서치 2025",
+        "category": "HR전략·조직문화 / HR Strategy",
+    },
+]
+
+BUSINESS_RELEVANCE_KW = [
+    "artificial intelligence", "machine learning", "generative ai", "llm", "ai strategy",
+    "ai adoption", "agentic ai", "physical ai", "robotics", "automation", "digital transformation",
+    "cloud computing", "semiconductor", "chip", "nvidia", "tsmc", "hbm",
+    "business strategy", "competitive advantage", "market disruption", "innovation", "startup",
+    "sustainability", "esg", "climate tech", "net zero", "supply chain", "productivity",
+    "enterprise", "workforce transformation", "data center",
+    "반도체", "인공지능", "디지털전환", "자동화", "스마트팩토리", "물리AI", "에이전틱AI",
+    "AI 전략", "AI 도입", "클라우드", "ESG 경영", "지속가능성", "탄소중립",
+    "혁신 전략", "글로벌 전략", "공급망", "생산성", "기업 경쟁력",
+]
+BUSINESS_EXCLUDE_KW = [
+    "축구", "야구", "농구", "골프", "올림픽", "월드컵", "선수", "구단",
+    "연예인", "아이돌", "콘서트", "드라마", "영화", "k-pop",
+    "대선", "총선", "대통령선거", "검찰 수사", "오늘의 운세", "운세",
+    "football", "soccer", "basketball", "golf", "olympics", "athlete", "league game",
+    "Grammy", "Emmy", "Oscar", "celebrity", "entertainment", "box office",
+    "senate vote", "election campaign", "stock tips", "crypto trading", "bitcoin price",
+]
+
+
+def is_business_relevant(title: str, description: str) -> bool:
+    text = f"{title} {description}".lower().replace(" ", "")
+    if any(bad.lower().replace(" ", "") in text for bad in BUSINESS_EXCLUDE_KW):
+        return False
+    title_l = title.lower().replace(" ", "")
+    if any(kw.lower().replace(" ", "") in title_l for kw in BUSINESS_RELEVANCE_KW):
+        return True
+    hits = sum(1 for kw in BUSINESS_RELEVANCE_KW if kw.lower().replace(" ", "") in text)
+    return hits >= 2
+
+
+def _detect_business_topic(title: str, description: str) -> str:
+    text = f"{title} {description}".lower()
+    if any(kw in text for kw in ["physical ai", "humanoid", "embodied ai", "autonomous robot",
+                                   "물리 ai", "물리ai", "로봇", "자율주행", "boston dynamics"]):
+        return "physical_ai"
+    if any(kw in text for kw in ["semiconductor", "chip", "tsmc", "hbm", "wafer",
+                                   "foundry", "반도체", "칩", "sk hynix", "sk하이닉스"]):
+        return "semiconductor"
+    if any(kw in text for kw in ["digital transformation", "cloud", "digitalization",
+                                   "디지털전환", "클라우드", "스마트팩토리"]):
+        return "digital_transformation"
+    if any(kw in text for kw in ["artificial intelligence", "machine learning", "llm",
+                                   "generative ai", "agentic ai", "ai strategy",
+                                   "인공지능", "ai 전략", "에이전틱", "생성형 ai"]):
+        return "ai_strategy"
+    return "general"
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def load_business_insights() -> pd.DataFrame:
+    articles = []
+    for ins in BUSINESS_INSIGHTS_CURATED:
+        articles.append({
+            **ins,
+            "description": ins.get("summary_en", ins.get("summary_ko", "")),
+            "published": ins["published_str"],
+            "trust": get_trust(ins["source"].split("/")[0].strip()),
+        })
+    for src_name, (rss_url, region) in BUSINESS_RSS_SOURCES.items():
+        items = fetch_rss(src_name, rss_url, region, max_items=8)
+        for a in items:
+            a["category"] = "벤치마킹·글로벌트렌드 / Benchmarking"
+            a["topic"] = _detect_business_topic(a.get("title", ""), a.get("description", ""))
+        articles.extend(items)
+    df = pd.DataFrame(articles)
+    if df.empty:
+        return df
+    df = df[df["title"].str.strip().str.len() > 5]
+    keep_mask = df.apply(
+        lambda r: bool(r.get("tag") == "Business Insight") or is_business_relevant(
+            r.get("title", ""), r.get("description", "")),
+        axis=1,
+    )
+    df = df[keep_mask]
+    df = df.drop_duplicates(subset=["title"])
+    df["published_dt"] = pd.to_datetime(df["published"], errors="coerce")
+    df["published_str"] = df["published_dt"].dt.strftime("%Y-%m-%d").fillna(
+        df["published"].fillna("날짜 미상"))
+    df = df.sort_values("published_dt", ascending=False, na_position="last")
+    return df.reset_index(drop=True)
 
 
 @st.cache_data(ttl=1800, show_spinner=False)

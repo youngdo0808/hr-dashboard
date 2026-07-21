@@ -39,6 +39,7 @@ NAV_ITEMS = [
     ("korea", "🇰🇷 Korea"),
     ("global", "🌍 Global"),
     ("thinktank", "🏛️ Think Tank"),
+    ("business", "💡 Business Insights"),
     ("settings", "⚙️ Settings"),
 ]
 

@@ -53,12 +53,18 @@ def category_badge(category: str, cfg: dict):
     return badge(f"{icon} {short}", f"{color}12", color, f"{color}35")
 
 
+_SENT_END = (".", "!", "?", "다", "요", ")", "」", "』", '"', "다.", "요.", "다!",
+             "요!", "습니다", "합니다", "됩니다", "있습니다", "없습니다", "입니다")
+
+
 def sentence_bullets(text: str, max_bullets: int = 3) -> list:
-    """AI 없이도 원문을 문장 단위로 쪼개서 불릿 리스트로 만들어줌 (중간에 끊기지 않도록)."""
+    """원문을 완전한 문장 단위로만 쪼개 불릿 리스트로 만든다. 잘린 문장은 절대 포함하지 않는다."""
     text = (text or "").strip()
     if not text:
         return []
     sentences = [s.strip() for s in re.split(r"(?<=[.!?다요])\s+", text) if s.strip()]
     if not sentences:
-        return [text]
-    return sentences[:max_bullets]
+        return [text] if text.endswith(_SENT_END) else []
+    if len(sentences) > 1 and not sentences[-1].endswith(_SENT_END):
+        sentences = sentences[:-1]
+    return sentences[:max_bullets] if sentences else []

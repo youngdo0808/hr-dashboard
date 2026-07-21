@@ -16,6 +16,7 @@ from components.metrics import render_signals_section
 from components.news_card import render_news_card
 from components.thinktank import render_thinktank_section, render_thinktank_full_page
 from components.executive import render_executive_insight, render_exec_hot_stories
+from components.business_insights import render_business_insights_page
 
 st.set_page_config(page_title="AI HR Intelligence Dashboard", page_icon="🧠",
                     layout="wide", initial_sidebar_state="expanded")
@@ -37,7 +38,8 @@ if "signal_filter" not in st.session_state:
 if "signal_label" not in st.session_state:
     st.session_state["signal_label"] = ""
 
-gemini_ok = get_gemini_client() is not None
+# Re-use the already-initialised session value — avoids a duplicate google.genai import
+gemini_ok = st.session_state["ai_on"]
 
 # ── 사이드바 ─────────────────────────────────────────────
 with st.sidebar:
@@ -210,6 +212,12 @@ elif page == "global":
 # ══════════════════════════════════════════════════════════
 elif page == "thinktank":
     render_thinktank_full_page(thinktank_df, df_view, compute_signals(df_view), ai_on)
+
+# ══════════════════════════════════════════════════════════
+# 💡 BUSINESS INSIGHTS
+# ══════════════════════════════════════════════════════════
+elif page == "business":
+    render_business_insights_page(ai_on)
 
 # ══════════════════════════════════════════════════════════
 # ⚙️ SETTINGS

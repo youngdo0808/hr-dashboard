@@ -37,6 +37,7 @@ def _enrich_row(row, ai_on: bool) -> dict:
 
 def _tt_card_html(row, ai_on: bool = False) -> str:
     """Language-aware Think Tank card HTML (curated + live RSS 모두 지원)."""
+    import html as _html
     row = _enrich_row(row, ai_on)
     lang = st.session_state.get("lang", "ko")
 
@@ -61,7 +62,7 @@ def _tt_card_html(row, ai_on: bool = False) -> str:
         f'<div class="tt-row"><div class="tt-label">{lbl2}</div><div class="tt-text">{action}</div></div>'
         f'<div class="tt-row"><div class="tt-label">{lbl3}</div><div class="tt-text">{insight}</div></div>'
         f'<div class="tt-source">'
-        f'<a href="{row.get("url", "#")}" target="_blank" rel="noopener" style="color:#93C5FD;text-decoration:none">'
+        f'<a href="{_html.escape(str(row.get("url", "#")), quote=True)}" target="_blank" rel="noopener" style="color:#93C5FD;text-decoration:none">'
         f'{row.get("source", "")} — Read Original ↗</a>'
         f'</div></div>'
     )

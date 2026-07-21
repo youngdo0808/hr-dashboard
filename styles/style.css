@@ -397,6 +397,52 @@
     gap: 8px;
 }
 
+/* ── Business Insights cards ── */
+.bi-card {
+    background: linear-gradient(135deg, #0B0F2C 0%, #0F1B4C 55%, #162465 100%);
+    border-radius: 20px; padding: 28px 30px; color: #fff;
+    margin-bottom: 16px;
+    box-shadow: 0 16px 40px rgba(11,21,48,0.28), 0 2px 8px rgba(11,21,48,0.14);
+    position: relative; overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.bi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 56px rgba(11,21,48,0.36), 0 4px 12px rgba(11,21,48,0.2);
+}
+.bi-card::before {
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(147,197,253,0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+.bi-topic-tag {
+    display: inline-block; font-size: 0.6rem; font-weight: 800;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(147,197,253,0.3);
+    color: #93C5FD; border-radius: 20px; padding: 4px 12px; margin-bottom: 14px;
+}
+.bi-title {
+    font-size: 1.05rem; font-weight: 800; line-height: 1.45; margin-bottom: 16px;
+    word-break: break-word; overflow-wrap: anywhere; color: #fff;
+}
+.bi-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+.bi-row:last-of-type { margin-bottom: 0; }
+.bi-label {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+    color: #93C5FD; min-width: 136px; padding-top: 3px; flex-shrink: 0;
+}
+.bi-text {
+    font-size: 0.84rem; line-height: 1.78; color: #E2E8F0; flex: 1;
+    word-break: break-word; overflow-wrap: anywhere;
+}
+.bi-source {
+    font-size: 0.7rem; color: #94A3B8; margin-top: 16px;
+    padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+}
+.bi-source-name { font-weight: 700; color: #BAE6FD; }
+
 /* ── Footer ── */
 .app-footer {
     margin: 56px -2.4rem 0;

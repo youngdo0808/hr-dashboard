@@ -72,19 +72,57 @@ _DEFAULT = {
 }
 
 
+def _short_title(title: str, max_len: int = 50) -> str:
+    """기사 제목에서 핵심 구문만 추출한다 (콜론 이전, 최대 max_len자)."""
+    core = title.split(":")[0].split("—")[0].split("–")[0].strip()
+    if len(core) <= max_len:
+        return core
+    return core[:max_len].rsplit(" ", 1)[0]
+
+
 def rule_based_structured(title: str, description: str, category: str) -> dict:
-    """API 키 없이도 항상 완전한 4-블록 구조를 만든다."""
-    points = sentence_bullets(description, max_bullets=3) or [f"『{title}』 관련 소식입니다." if _is_korean(title) else f'Related update: "{title}"']
+    """API 키 없이도 항상 완전한 4-블록 구조를 만든다.
+    Business Impact는 기사 제목을 반영해 카드마다 다르게 표시한다."""
+    ko_points = sentence_bullets(description, max_bullets=3)
+    if not ko_points:
+        ko_points = [f"『{title}』 관련 소식입니다." if _is_korean(title) else f'Related update: "{title}".']
+
+    desc_is_korean = _is_korean(description)
+    title_is_korean = _is_korean(title)
+    if desc_is_korean or (not description.strip() and title_is_korean):
+        clean_title = title.rstrip(".")
+        en_points = [
+            f"Key update: {clean_title}.",
+            "For full details, please refer to the original article.",
+        ]
+    else:
+        en_points = ko_points
+
+    # ── Article-specific Business Impact ──────────────────────────────────
+    # 기사 제목을 삽입해 모든 카드가 다른 비즈니스 영향을 표시하도록 한다.
+    base_impact_ko = _IMPACT_KO.get(category, _DEFAULT["impact_ko"])
+    base_impact_en = _IMPACT_EN.get(category, _DEFAULT["impact_en"])
+    s = _short_title(title)
+
+    if title_is_korean:
+        impact_ko = f"「{s}」 관련 동향은 {base_impact_ko}"
+        impact_en = base_impact_en  # 영문 제목 없으면 영문 템플릿 그대로
+    else:
+        impact_ko = f"이번 '{s}' 관련 이슈는 {base_impact_ko}"
+        # 영문 첫 글자 소문자로 자연스럽게 연결
+        rest_en = base_impact_en[0].lower() + base_impact_en[1:] if base_impact_en else ""
+        impact_en = f'The "{s}" development {rest_en}'
+
     return {
         "ko": {
-            "points": points,
-            "impact": _IMPACT_KO.get(category, _DEFAULT["impact_ko"]),
+            "points": ko_points,
+            "impact": impact_ko,
             "insight": _INSIGHT_KO.get(category, _DEFAULT["insight_ko"]),
             "action": _ACTION_KO.get(category, _DEFAULT["action_ko"]),
         },
         "en": {
-            "points": points,
-            "impact": _IMPACT_EN.get(category, _DEFAULT["impact_en"]),
+            "points": en_points,
+            "impact": impact_en,
             "insight": _INSIGHT_EN.get(category, _DEFAULT["insight_en"]),
             "action": _ACTION_EN.get(category, _DEFAULT["action_en"]),
         },
@@ -112,6 +150,7 @@ def get_gemini_client():
 def _build_prompt(title, description, category, lang="ko"):
     if lang == "ko":
         return f"""당신은 HR 전문 애널리스트입니다. 아래 뉴스를 분석해 HR 담당자에게 실용적인 정보를 주세요.
+이 기사가 HR, 인력, 비즈니스 전략, 노동, 조직문화와 무관하다면 'NOT_HR_RELEVANT'만 응답하세요.
 
 카테고리: {category}
 제목: {title}
@@ -127,6 +166,7 @@ IMPACT: [기업 입장에서의 비즈니스 영향 - 완전한 문장]
 INSIGHT: [HR 담당자가 고려해야 할 시사점 - 완전한 문장]
 ACTION: [지금 취할 수 있는 실무 조치 - 완전한 문장]"""
     return f"""You are a professional HR analyst. Analyze the news below for HR professionals.
+If this article is not relevant to HR, workforce, business strategy, labor, or organizational culture, respond only with: NOT_HR_RELEVANT
 
 Category: {category}
 Title: {title}
@@ -154,6 +194,8 @@ def _is_complete(s: str) -> bool:
 
 
 def _parse_structured(text: str) -> dict:
+    if "NOT_HR_RELEVANT" in (text or "").upper():
+        return {"points": [], "impact": "", "insight": "", "action": ""}
     points, impact, insight, action = [], "", "", ""
     for line in text.splitlines():
         line = line.strip()
@@ -182,12 +224,16 @@ def _parse_structured(text: str) -> dict:
 @st.cache_data(ttl=86400, show_spinner=False)
 def _ai_structured(title: str, description: str, category: str) -> dict | None:
     client = get_gemini_client()
-    if not client or not description or len(description.strip()) < 20:
+    if not client:
+        return None
+    # description이 너무 짧으면 title을 description으로 보완해 Gemini가 분석할 수 있게 한다
+    effective_desc = description.strip() if len(description.strip()) >= 20 else title.strip()
+    if not effective_desc:
         return None
     from google.genai import types
     out = {}
     for lang in ("ko", "en"):
-        prompt = _build_prompt(title, description, category, lang)
+        prompt = _build_prompt(title, effective_desc, category, lang)
         parsed = None
         for attempt in range(2):
             try:
